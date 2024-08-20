@@ -1,34 +1,63 @@
 //
-//  iOSGeekMVPTests.swift
+//  UsersPresenterTests.swift
 //  iOSGeekMVPTests
 //
 //  Created by Sanjay Vekariya on 8/12/24.
 //
 
 import XCTest
+@testable import iOSGeekMVP
 
-final class iOSGeekMVPTests: XCTestCase {
-
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+final class UsersPresenterTests: XCTestCase {
+    let spyServiceProvider = SpyUsersServiceProvider()
+    let mockController = MockUserViewController()
+    private lazy var sut = makeSUT()
+    
+    func test_loadUsers_succss() {
+        let serviceExp = expectation(description: "fetchUsersSuccess")
+        spyServiceProvider.expectation = serviceExp
+        let uiExp = expectation(description: "showUsers")
+        mockController.expectation = uiExp
+        
+        sut.loadUsers()
+        
+        wait(for: [serviceExp, uiExp], timeout: 1)
     }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    
+    func test_loadUsers_failure() {
+        let serviceExp = expectation(description: "fetchUsersFailure")
+        spyServiceProvider.success = false
+        spyServiceProvider.expectation = serviceExp
+        let uiExp = expectation(description: "showError")
+        mockController.expectation = uiExp
+        
+        sut.loadUsers()
+        
+        wait(for: [serviceExp, uiExp], timeout: 1)
     }
-
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    
+    private func makeSUT() -> UsersPresenter {
+        let sut = UsersPresenter(serviceProvider: spyServiceProvider)
+        sut.controller = mockController
+        return sut
     }
+}
 
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        measure {
-            // Put the code you want to measure the time of here.
+final class MockUserViewController: UsersViewControlling {
+    var expectation: XCTestExpectation?
+
+    func showUsers(_ users: [iOSGeekMVP.User]) {
+        lookForExpectation("showUsers")
+    }
+    
+    func showError(_ message: String) {
+        lookForExpectation("showError")
+    }
+    
+    private func lookForExpectation(_ desc: String) {
+        if expectation?.description == desc {
+            expectation?.fulfill()
+            expectation = nil
         }
     }
 

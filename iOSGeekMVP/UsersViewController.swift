@@ -7,7 +7,7 @@
 
 import UIKit
 
-protocol UsersViewControlling where Self: UsersViewController {
+protocol UsersViewControlling: AnyObject {
     func showUsers(_ users: [User])
     func showError(_ message: String)
 }
